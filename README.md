@@ -26,6 +26,14 @@ Execute the test suite with:
 
 Test results are written to `build/reports/tests`.
 
+## Running the Application
+
+Launch the JavaFX interface with:
+
+```bash
+./gradlew run
+```
+
 ## License
 
 This project is licensed under the [Apache License 2.0](LICENSE).
