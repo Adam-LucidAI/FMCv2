@@ -1,7 +1,17 @@
 package org.example.flowmod.engine;
 
 /**
- * Marker interface for design rule configuration.
+ * Configuration interface supplying constraints for the optimiser.
  */
 public interface DesignRules {
+
+    /**
+     * Desired number of hole rows along the header.
+     */
+    int rowCount();
+
+    /**
+     * Allowed drill diameters in millimetres.
+     */
+    java.util.List<Double> allowableDrillSizesMm();
 }

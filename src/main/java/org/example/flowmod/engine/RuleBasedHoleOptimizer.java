@@ -18,13 +18,19 @@ public class RuleBasedHoleOptimizer extends GraduatedHoleOptimizer {
 
     @Override
     public HoleLayout optimize(FlowParameters params) {
-        int rows = 10;
+        int rows = designRules.rowCount();
+        if (rows <= 0) {
+            rows = 1;
+        }
         HoleLayout blank = new HoleLayout();
         for (int i = 0; i < rows; i++) {
             blank.addHole(new HoleSpec(i, 0.0, 0.0));
         }
 
-        java.util.List<Double> drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
+        java.util.List<Double> drillSet = designRules.allowableDrillSizesMm();
+        if (drillSet == null || drillSet.isEmpty()) {
+            drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
+        }
 
         HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
         double err = FlowPhysics.computeUniformityError(layout, params);
