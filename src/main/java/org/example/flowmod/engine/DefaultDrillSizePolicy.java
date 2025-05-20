@@ -9,6 +9,6 @@ public class DefaultDrillSizePolicy implements DrillSizePolicy {
         if (spec == null) {
             throw new IllegalArgumentException("spec must not be null");
         }
-        return spec.diameter();
+        return spec.holeDiameterMm();
     }
 }
