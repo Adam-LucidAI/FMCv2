@@ -267,6 +267,7 @@ ehthumbs_vista.db
 # Dump file
 *.stackdump
 
+!gradle/wrapper/gradle-8.7-all.zip
 # Folder config file
 [Dd]esktop.ini
 
