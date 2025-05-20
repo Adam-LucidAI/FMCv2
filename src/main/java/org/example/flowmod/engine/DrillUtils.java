@@ -58,13 +58,23 @@ public final class DrillUtils {
 
     private static HoleLayout minimiseDrillChanges(HoleLayout layout) {
         java.util.List<HoleSpec> result = new java.util.ArrayList<>();
-        HoleSpec prev = null;
+        java.util.List<HoleSpec> currentGroup = new java.util.ArrayList<>();
+        Double prevDiameter = null;
+
         for (HoleSpec h : layout.getHoles()) {
-            if (prev == null || Double.compare(prev.holeDiameterMm(), h.holeDiameterMm()) != 0) {
-                result.add(h);
-                prev = h;
+            double d = h.holeDiameterMm();
+            if (prevDiameter == null || Double.compare(prevDiameter, d) == 0) {
+                currentGroup.add(h);
+            } else {
+                // flush previous group before starting a new one
+                result.addAll(currentGroup);
+                currentGroup.clear();
+                currentGroup.add(h);
             }
+            prevDiameter = d;
         }
+
+        result.addAll(currentGroup);
         return toLayout(result);
     }
 
