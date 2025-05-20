@@ -13,7 +13,17 @@ dependencies {
     implementation 'org.slf4j:slf4j-api:2.0.7'
     runtimeOnly 'org.slf4j:slf4j-simple:2.0.7'
     def fxVersion = '21.0.3'
-    def os = org.gradle.internal.os.OperatingSystem.current().classifier
+    def currentOs = org.gradle.internal.os.OperatingSystem.current()
+    def os
+    if (currentOs.isWindows()) {
+        os = 'win'
+    } else if (currentOs.isMacOsX()) {
+        os = 'mac'
+    } else if (currentOs.isLinux()) {
+        os = 'linux'
+    } else {
+        throw new GradleException("Unsupported operating system: $currentOs")
+    }
 
     implementation "org.openjfx:javafx-base:$fxVersion"
     implementation "org.openjfx:javafx-graphics:$fxVersion"
