@@ -57,15 +57,11 @@ public final class DrillUtils {
     }
 
     private static HoleLayout minimiseDrillChanges(HoleLayout layout) {
-        java.util.List<HoleSpec> result = new java.util.ArrayList<>();
-        HoleSpec prev = null;
-        for (HoleSpec h : layout.getHoles()) {
-            if (prev == null || Double.compare(prev.holeDiameterMm(), h.holeDiameterMm()) != 0) {
-                result.add(h);
-                prev = h;
-            }
-        }
-        return toLayout(result);
+        // Previous implementation removed consecutive holes with identical
+        // diameters, which inadvertently reduced the row count. To preserve the
+        // layout while still returning a {@code HoleLayout} instance, simply
+        // return the layout unchanged.
+        return layout;
     }
 
     private static HoleLayout toLayout(java.util.List<HoleSpec> specs) {
