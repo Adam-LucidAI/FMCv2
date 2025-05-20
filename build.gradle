@@ -9,7 +9,6 @@ java {
     }
 }
 
-main
 repositories {
     mavenCentral()
 }
