@@ -2,8 +2,6 @@ plugins {
     id 'java'
 }
 
-codex/add-junit-test-for-rulebasedholeoptimizer
-
 
 java {
     toolchain {
@@ -18,7 +16,6 @@ repositories {
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
-codex/add-junit-test-for-rulebasedholeoptimizer
 
 
 main
