@@ -18,6 +18,12 @@ public class FlowPhysicsTest {
     @Test
     public void testFrictionDrop() {
         double drop = FlowPhysics.frictionDrop_kPa(1000.0, 150.0, 6.0);
-        assertTrue(Math.abs(drop - 0.35) / 0.35 < 0.1);
+        assertEquals(0.0084, drop, 0.0005);
+    }
+
+    @Test
+    public void testOrificeFlowKnownCase() {
+        double q = FlowPhysics.orificeFlowLps(10.0, 20.0);
+        assertEquals(0.303, q, 0.005);
     }
 }
