@@ -2,9 +2,12 @@ package org.example.flowmod.engine;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+ main
 
 public class RuleBasedHoleOptimizerTest {
 
@@ -31,5 +34,17 @@ public class RuleBasedHoleOptimizerTest {
         assertEquals(10, layout2.getHoles().size());
         double err2 = FlowPhysics.computeUniformityError(layout2, new FlowParameters(400.0, 31.5, 2000.0));
         assertTrue(err2 <= 5.0);
+    }
+
+    @Test
+    public void testOptimizePreservesRowCount() {
+        DrillSizePolicy policy = new DefaultDrillSizePolicy();
+        FlowPhysics physics = new FlowPhysics();
+        DesignRules rules = new DesignRules() {};
+        RuleBasedHoleOptimizer optimizer = new RuleBasedHoleOptimizer(rules, policy, physics);
+
+        HoleLayout layout = optimizer.optimize(new FlowParameters(200.0, 10.0, 1500.0));
+        assertNotNull(layout);
+        assertEquals(10, layout.getHoles().size());
     }
 }
