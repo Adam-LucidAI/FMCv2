@@ -8,7 +8,8 @@ FMCv2 is a tool for designing flow modifiers. It calculates design parameters an
 
 ## Building
 
-Use the Gradle wrapper to build the project. The wrapper downloads Gradle automatically.
+Use the Gradle wrapper to build the project. The required Gradle distribution is
+included in `gradle/wrapper`, so no network access is needed.
 
 ```bash
 ./gradlew build
@@ -22,6 +23,11 @@ Execute the test suite with:
 
 ```bash
 ./gradlew test
+```
+The wrapper can run completely offline using the `--offline` flag:
+
+```bash
+./gradlew --offline test
 ```
 
 Test results are written to `build/reports/tests`.
