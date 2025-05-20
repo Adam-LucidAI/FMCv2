@@ -19,8 +19,8 @@ public class GraduatedHoleOptimizer {
     public HoleLayout optimize(FlowParameters params) {
         // Dummy implementation with a single hole
         HoleLayout layout = new HoleLayout();
-        double size = drillSizePolicy.getDrillSize(new HoleSpec(1.0, 0.0));
-        layout.addHole(new HoleSpec(size, 0.0));
+        double size = drillSizePolicy.getDrillSize(new HoleSpec(0, 1.0, 0.0));
+        layout.addHole(new HoleSpec(0, size, 0.0));
         return layout;
     }
 }
