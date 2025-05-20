@@ -57,9 +57,6 @@ public final class DrillUtils {
     }
 
     private static HoleLayout minimiseDrillChanges(HoleLayout layout) {
-       
-        return layout;
-
         java.util.List<HoleSpec> result = new java.util.ArrayList<>();
         java.util.List<HoleSpec> currentGroup = new java.util.ArrayList<>();
         Double prevDiameter = null;
