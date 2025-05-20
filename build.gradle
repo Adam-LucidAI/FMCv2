@@ -2,12 +2,26 @@ plugins {
     id 'java'
 }
 
+codex/add-junit-test-for-rulebasedholeoptimizer
+
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+main
 repositories {
     mavenCentral()
 }
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
+codex/add-junit-test-for-rulebasedholeoptimizer
+
+
+main
     implementation 'org.apache.commons:commons-math3:3.6.1'
     implementation 'org.slf4j:slf4j-api:2.0.7'
     runtimeOnly 'org.slf4j:slf4j-simple:2.0.7'
