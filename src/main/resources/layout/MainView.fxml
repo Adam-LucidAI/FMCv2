@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.collections.FXCollections?>
 <?import javafx.scene.layout.*?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
@@ -14,6 +15,15 @@
             <TextField fx:id="flowField" promptText="100"/>
             <Label text="Header length mm"/>
             <TextField fx:id="lenField" promptText="1200"/>
+            <Label text="Mode"/>
+            <ChoiceBox fx:id="modeChoice">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="Pressure"/>
+                        <String fx:value="Suction"/>
+                    </FXCollections>
+                </items>
+            </ChoiceBox>
             <Button fx:id="designBtn" text="Design" onAction="#onDesign"/>
         </VBox>
     </left>

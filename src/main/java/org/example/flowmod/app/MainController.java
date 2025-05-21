@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 public final class MainController {
 
     @FXML private TextField pipeField, flowField, lenField;
+    @FXML private ChoiceBox<String> modeChoice;
     @FXML private Button designBtn, exportCsvBtn, exportSvgBtn;
     @FXML private TableView<HoleSpec> table;
     @FXML private TableColumn<HoleSpec, Number> posCol, rowCol, diaCol;
@@ -28,6 +29,9 @@ public final class MainController {
                 c.getValue().axialPosMm()));
         rowCol.setCellValueFactory(c -> new SimpleDoubleProperty(c.getValue().rowIndex()));
         diaCol.setCellValueFactory(c -> new SimpleDoubleProperty(c.getValue().holeDiameterMm()));
+        if (modeChoice != null) {
+            modeChoice.getSelectionModel().selectFirst();
+        }
     }
 
     @FXML
@@ -38,7 +42,11 @@ public final class MainController {
             double len  = Double.parseDouble(lenField.getText());
 
             double lps = gpm * 0.0631;   // GPM → L/s
-            FlowParameters p = new FlowParameters(id, lps, len);
+            HeaderType mode = HeaderType.PRESSURE;
+            if (modeChoice != null && "Suction".equalsIgnoreCase(modeChoice.getValue())) {
+                mode = HeaderType.SUCTION;
+            }
+            FlowParameters p = new FlowParameters(id, lps, len, mode);
 
             layout = optimizer.optimize(p);
 

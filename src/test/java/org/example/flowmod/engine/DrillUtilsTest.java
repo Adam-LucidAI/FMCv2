@@ -14,7 +14,7 @@ public class DrillUtilsTest {
             blank.addHole(new HoleSpec(i, 0.0, 0.0));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
-        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0);
+        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
 
         HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
         assertEquals(rows, layout.getHoles().size());
@@ -30,7 +30,7 @@ public class DrillUtilsTest {
             blank.addHole(new HoleSpec(i, 0.0, 0.0));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
-        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0);
+        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
 
         HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
         double prev = 0.0;
@@ -48,7 +48,7 @@ public class DrillUtilsTest {
             blank.addHole(new HoleSpec(i, 0.0, 0.0));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0);
-        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0);
+        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
 
         HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
         for (HoleSpec h : layout.getHoles()) {

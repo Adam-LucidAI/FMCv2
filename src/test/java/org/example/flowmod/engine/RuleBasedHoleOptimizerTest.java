@@ -17,7 +17,7 @@ public class RuleBasedHoleOptimizerTest {
         DesignRules rules = new BasicDesignRules(10,
                 java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0));
         RuleBasedHoleOptimizer optimizer = new RuleBasedHoleOptimizer(rules, policy, physics);
-        FlowParameters p1 = new FlowParameters(150.0, 6.309, 1200.0);
+        FlowParameters p1 = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
         HoleLayout layout = optimizer.optimize(p1);
         assertNotNull(layout);
         assertNotNull(layout.getHoles());
@@ -29,7 +29,7 @@ public class RuleBasedHoleOptimizerTest {
             assertTrue(rules.allowableDrillSizesMm().contains(h.holeDiameterMm()));
         }
 
-        FlowParameters p2 = new FlowParameters(400.0, 31.5, 2000.0);
+        FlowParameters p2 = new FlowParameters(400.0, 31.5, 2000.0, HeaderType.PRESSURE);
         HoleLayout layout2 = optimizer.optimize(p2);
         int expectedRows2 = (int) Math.floor(p2.headerLenMm() / DesignRules.DEFAULT_ROW_SPACING_MM);
         assertEquals(expectedRows2, layout2.getHoles().size());
@@ -44,7 +44,7 @@ public class RuleBasedHoleOptimizerTest {
         DesignRules rules = new DesignRules() {};
         RuleBasedHoleOptimizer optimizer = new RuleBasedHoleOptimizer(rules, policy, physics);
 
-        FlowParameters p = new FlowParameters(200.0, 10.0, 1500.0);
+        FlowParameters p = new FlowParameters(200.0, 10.0, 1500.0, HeaderType.PRESSURE);
         HoleLayout layout = optimizer.optimize(p);
         assertNotNull(layout);
         int expectedRows = (int) Math.floor(p.headerLenMm() / DesignRules.DEFAULT_ROW_SPACING_MM);
