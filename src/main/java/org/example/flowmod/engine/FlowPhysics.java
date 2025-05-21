@@ -8,12 +8,19 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
  * Utilities for computing simple flow equations used by optimizers.
  */
 public final class FlowPhysics {
-    private static final double CD = 0.61;          // Discharge coefficient
     private static final double RHO = 1000.0;       // kg/m^3
     private static final double MU = 0.001;         // Pa.s
-    private static final double EPS = 4.5e-5;       // m, typical roughness
+    private static final double EPS = 4.5e-5;       // m, typical roughness (0.045 mm)
 
     public FlowPhysics() {
+    }
+
+    /** Empirical discharge coefficient as a function of Reynolds number. */
+    private static double computeCd(double Re) {
+        if (Re <= 0) {
+            return 0.0;
+        }
+        return 0.611 - 0.075 * Math.pow(Re / 1.0e5, -0.2);
     }
 
     /** Volumetric flow through a circular orifice, L/s. */
@@ -21,7 +28,20 @@ public final class FlowPhysics {
         double d = dMm / 1000.0;
         double area = Math.PI * d * d / 4.0;
         double dp = deltaP_kPa * 1000.0;
-        double q = CD * area * Math.sqrt(2.0 * dp / RHO);
+
+        double q = 0.0;
+        double cd = 0.611;
+        for (int i = 0; i < 10; i++) {
+            q = cd * area * Math.sqrt(2.0 * dp / RHO);
+            double v = q / area;
+            double Re = RHO * v * d / MU;
+            double newCd = computeCd(Re);
+            if (Math.abs(newCd - cd) < 1e-6) {
+                cd = newCd;
+                break;
+            }
+            cd = newCd;
+        }
         return q * 1000.0; // m^3/s to L/s
     }
 
@@ -30,8 +50,10 @@ public final class FlowPhysics {
         double q = qLps / 1000.0;
         double d = dMm / 1000.0;
         double area = Math.PI * d * d / 4.0;
-        double v = q / (CD * area);
-        double dp = (v * v) * RHO / 2.0;
+        double v = q / area;
+        double Re = RHO * v * d / MU;
+        double cd = computeCd(Re);
+        double dp = Math.pow(q / (cd * area), 2.0) * RHO / 2.0;
         return dp / 1000.0;
     }
 
@@ -74,29 +96,71 @@ public final class FlowPhysics {
 
         double spacing = p.headerLenMm() / (double) n;
         double idMm = p.pipeDiameterMm();
+        double totalFlow = p.flowLps();
+
+        // mass balance function: total flow from given supply pressure
+        java.util.function.DoubleFunction<Double> totalFromPressure = (press) -> {
+            double pipeFlow = totalFlow;
+            double localP = press;
+            double sum = 0.0;
+            for (int i = 0; i < n; i++) {
+                HoleSpec h = holes.get(i);
+                double dp = p.headerType() == HeaderType.PRESSURE ? localP : -localP;
+                double q = orificeFlowLps(h.holeDiameterMm(), Math.max(dp, 0.0));
+                sum += q;
+                pipeFlow -= q;
+                if (i < n - 1) {
+                    double drop = frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
+                    if (p.headerType() == HeaderType.PRESSURE) {
+                        localP -= drop;
+                    } else {
+                        localP += drop;
+                    }
+                }
+            }
+            return sum;
+        };
+
+        org.apache.commons.math3.analysis.solvers.NewtonRaphsonSolver solver =
+                new org.apache.commons.math3.analysis.solvers.NewtonRaphsonSolver(1e-6);
+        org.apache.commons.math3.analysis.differentiation.UnivariateDifferentiableFunction func =
+                new org.apache.commons.math3.analysis.differentiation.UnivariateDifferentiableFunction() {
+            @Override
+            public double value(double x) {
+                return totalFromPressure.apply(x) - totalFlow;
+            }
+
+            @Override
+            public org.apache.commons.math3.analysis.differentiation.DerivativeStructure value(
+                    org.apache.commons.math3.analysis.differentiation.DerivativeStructure t) {
+                double x = t.getValue();
+                double f0 = totalFromPressure.apply(x);
+                double eps = 1e-6;
+                double fp = totalFromPressure.apply(x + eps);
+                double fm = totalFromPressure.apply(x - eps);
+                double derivative = (fp - fm) / (2 * eps);
+                return new org.apache.commons.math3.analysis.differentiation.DerivativeStructure(
+                        1, 1, f0 - totalFlow, derivative);
+            }
+        };
+
+        double supplyPressure = solver.solve(100, func, 10.0);
 
         double[] flowsArr = new double[n];
-        double pipeFlow = 0.0;
-        double pressure = 0.0;
-
-        // iterate from blind end toward the supply end
-        for (int i = n - 1; i >= 0; i--) {
-            HoleSpec hole = holes.get(i);
-            double holeFlow;
-            if (p.headerType() == HeaderType.PRESSURE) {
-                holeFlow = orificeFlowLps(hole.holeDiameterMm(), pressure);
-            } else {
-                holeFlow = orificeFlowLps(hole.holeDiameterMm(), -pressure);
-            }
-            flowsArr[i] = holeFlow;
-            pipeFlow += holeFlow;
-
-            if (i > 0) {
-                double drop = frictionDrop_kPa(spacing, idMm, pipeFlow);
+        double pipeFlow = totalFlow;
+        double localP = supplyPressure;
+        for (int i = 0; i < n; i++) {
+            HoleSpec h = holes.get(i);
+            double dp = p.headerType() == HeaderType.PRESSURE ? localP : -localP;
+            double q = orificeFlowLps(h.holeDiameterMm(), Math.max(dp, 0.0));
+            flowsArr[i] = q;
+            pipeFlow -= q;
+            if (i < n - 1) {
+                double drop = frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
                 if (p.headerType() == HeaderType.PRESSURE) {
-                    pressure += drop;
+                    localP -= drop;
                 } else {
-                    pressure -= drop;
+                    localP += drop;
                 }
             }
         }

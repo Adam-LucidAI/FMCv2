@@ -57,4 +57,27 @@ public class DrillUtilsTest {
         double err = FlowPhysics.computeUniformityError(layout, params);
         assertTrue(err > 5.0);
     }
+
+    @Test
+    public void testTaperHighFlowMultipleSizes() {
+        int rows = (int) Math.floor(1300.0 / DesignRules.DEFAULT_ROW_SPACING_MM);
+        HoleLayout blank = new HoleLayout();
+        for (int i = 0; i < rows; i++) {
+            blank.addHole(new HoleSpec(i, 0.0, 0.0));
+        }
+        java.util.List<Double> drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
+
+        double gpm = 120.0;
+        double lps = gpm * 0.0631;
+        FlowParameters params = new FlowParameters(200.0, lps, 1300.0, HeaderType.PRESSURE);
+
+        HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
+        java.util.Set<Double> used = new java.util.HashSet<>();
+        for (HoleSpec h : layout.getHoles()) {
+            used.add(h.holeDiameterMm());
+        }
+        assertTrue(used.size() >= 4, "Expected at least 4 drill sizes but got " + used.size());
+        double err = FlowPhysics.computeUniformityError(layout, params);
+        assertTrue(err <= 5.0, "Uniformity error too high: " + err);
+    }
 }

@@ -31,13 +31,16 @@ public final class DrillUtils {
         }
 
         HoleLayout layout = toLayout(holes);
-        java.util.List<Double> flows = FlowPhysics.rowFlows(layout, p);
-        double error = FlowPhysics.computeUniformityError(layout, p);
         int drillIdxMax = drillSet.size() - 1;
 
         // target 5% coefficient of variation
         final double target = 5.0;
-        while (error > target) {
+        while (true) {
+            java.util.List<Double> flows = FlowPhysics.rowFlows(layout, p);
+            double error = FlowPhysics.computeUniformityError(layout, p);
+            if (error <= target) {
+                break;
+            }
             double mean = flows.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
             int idx = -1;
             double maxFlow = mean;
@@ -57,8 +60,6 @@ public final class DrillUtils {
             if (pos < drillIdxMax) {
                 holes.set(idx, new HoleSpec(h.rowIndex(), drillSet.get(pos + 1), h.angleDeg()));
                 layout = toLayout(holes);
-                flows = FlowPhysics.rowFlows(layout, p);
-                error = FlowPhysics.computeUniformityError(layout, p);
             } else {
                 // cannot reduce this row further - stop if no other row can change
                 boolean canChange = false;
@@ -73,6 +74,7 @@ public final class DrillUtils {
                     break;
                 }
                 // mark this row as non-adjustable for next iteration by setting its flow to mean
+                // (prevents endless loop when all rows fixed)
                 flows.set(idx, mean);
             }
         }
