@@ -31,25 +31,49 @@ public final class DrillUtils {
         }
 
         HoleLayout layout = toLayout(holes);
+        java.util.List<Double> flows = FlowPhysics.rowFlows(layout, p);
         double error = FlowPhysics.computeUniformityError(layout, p);
         int drillIdxMax = drillSet.size() - 1;
 
         // target 5% coefficient of variation
         final double target = 5.0;
         while (error > target) {
-            boolean changed = false;
-            for (int i = 0; i < holes.size() && error > target; i++) {
-                HoleSpec h = holes.get(i);
-                int pos = drillSet.indexOf(h.holeDiameterMm());
-                if (pos < drillIdxMax) {
-                    holes.set(i, new HoleSpec(h.rowIndex(), drillSet.get(pos + 1), h.angleDeg()));
-                    layout = toLayout(holes);
-                    error = FlowPhysics.computeUniformityError(layout, p);
-                    changed = true;
+            double mean = flows.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+            int idx = -1;
+            double maxFlow = mean;
+            for (int i = 0; i < flows.size(); i++) {
+                double f = flows.get(i);
+                if (f > maxFlow) {
+                    maxFlow = f;
+                    idx = i;
                 }
             }
-            if (!changed) {
+
+            if (idx < 0) {
                 break;
+            }
+            HoleSpec h = holes.get(idx);
+            int pos = drillSet.indexOf(h.holeDiameterMm());
+            if (pos < drillIdxMax) {
+                holes.set(idx, new HoleSpec(h.rowIndex(), drillSet.get(pos + 1), h.angleDeg()));
+                layout = toLayout(holes);
+                flows = FlowPhysics.rowFlows(layout, p);
+                error = FlowPhysics.computeUniformityError(layout, p);
+            } else {
+                // cannot reduce this row further - stop if no other row can change
+                boolean canChange = false;
+                for (HoleSpec spec : holes) {
+                    int pIdx = drillSet.indexOf(spec.holeDiameterMm());
+                    if (pIdx < drillIdxMax) {
+                        canChange = true;
+                        break;
+                    }
+                }
+                if (!canChange) {
+                    break;
+                }
+                // mark this row as non-adjustable for next iteration by setting its flow to mean
+                flows.set(idx, mean);
             }
         }
 
