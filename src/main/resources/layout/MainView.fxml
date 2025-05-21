@@ -16,8 +16,6 @@
             <TextField fx:id="flowField" promptText="100"/>
             <Label text="Header length mm"/>
             <TextField fx:id="lenField" promptText="1200"/>
-            <Label text="Supply pressure kPa"/>
-            <TextField fx:id="pressureField" promptText="100"/>
             <Label text="Mode"/>
             <ChoiceBox fx:id="modeChoice">
                 <items>

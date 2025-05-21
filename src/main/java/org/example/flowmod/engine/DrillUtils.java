@@ -34,8 +34,14 @@ public final class DrillUtils {
         final double target = 5.0;
 
         while (true) {
-            java.util.List<Double> flows = FlowPhysics.rowFlows(layout, p);
-            double err = FlowPhysics.computeUniformityError(layout, p);
+            double suction = FlowPhysics.findRequiredSuctionKPa(layout, p, -100.0, -1.0);
+            java.util.List<Double> flows = FlowPhysics.rowFlows(layout, p, suction);
+            org.apache.commons.math3.stat.descriptive.DescriptiveStatistics stats =
+                    new org.apache.commons.math3.stat.descriptive.DescriptiveStatistics();
+            for (double q : flows) {
+                stats.addValue(q);
+            }
+            double err = 100 * stats.getStandardDeviation() / stats.getMean();
             if (err <= target) {
                 break;
             }

@@ -2,6 +2,8 @@ package org.example.flowmod.engine;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.solvers.BrentSolver;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 /**
@@ -65,8 +67,10 @@ public final class FlowPhysics {
         return 1000.0 * v * (p.pipeDiameterMm() / 1000.0) / 0.001;
     }
 
-    /** Compute per-row flow for a HoleLayout, returning List<Double> L/s. */
-    public static List<Double> rowFlows(HoleLayout layout, FlowParameters p) {
+    /**
+     * Compute per-row flow for a {@link HoleLayout} using the provided suction pressure.
+     */
+    public static List<Double> rowFlows(HoleLayout layout, FlowParameters p, double suctionKPa) {
         List<HoleSpec> holes = layout.getHoles();
         int rows = holes.size();
         if (rows == 0) {
@@ -78,7 +82,7 @@ public final class FlowPhysics {
         double[] qh = new double[rows];
 
         double pipeFlow = p.flowLps();
-        double localP = p.supplyPressureKPa();
+        double localP = suctionKPa;
 
         for (int i = 0; i < rows; i++) {
             HoleSpec h = holes.get(i);
@@ -96,9 +100,32 @@ public final class FlowPhysics {
         return flows;
     }
 
+    /**
+     * Find the suction pressure that balances total row flow with the target flow rate.
+     */
+    public static double findRequiredSuctionKPa(HoleLayout layout, FlowParameters p,
+                                                double pMin, double pMax) {
+        BrentSolver solver = new BrentSolver(1e-6);
+        UnivariateFunction fn = x -> {
+            List<Double> flows = rowFlows(layout, p, x);
+            double total = flows.stream().mapToDouble(Double::doubleValue).sum();
+            return total - p.flowLps();
+        };
+        double root = solver.solve(100, fn, pMin, pMax);
+        for (int i = 0; i < 20; i++) {
+            double err = fn.value(root);
+            if (Math.abs(err) < 1e-4) {
+                break;
+            }
+            root = solver.solve(100, fn, root - 1.0, root + 1.0);
+        }
+        return root;
+    }
+
     /** Return uniformity error (%CV) = 100*σ/μ across rows. */
     public static double computeUniformityError(HoleLayout layout, FlowParameters p) {
-        List<Double> flows = rowFlows(layout, p);
+        double suction = findRequiredSuctionKPa(layout, p, -1000.0, -1.0);
+        List<Double> flows = rowFlows(layout, p, suction);
         org.apache.commons.math3.stat.descriptive.DescriptiveStatistics stats = new org.apache.commons.math3.stat.descriptive.DescriptiveStatistics();
         for (double q : flows) {
             stats.addValue(q);
@@ -107,27 +134,5 @@ public final class FlowPhysics {
         return cvPct;
     }
 
-    /**
-     * Iteratively adjust the supply pressure until the total of row flows equals
-     * the specified system flow.
-     */
-    public static FlowParameters balanceSupplyPressure(HoleLayout layout, FlowParameters base) {
-        double target = base.flowLps();
-        double lo = 0.0;
-        double hi = Math.max(1000.0, base.supplyPressureKPa() * 2 + 10.0);
-        for (int i = 0; i < 40; i++) {
-            double mid = (lo + hi) / 2.0;
-            FlowParameters guess = new FlowParameters(base.pipeDiameterMm(), base.flowLps(),
-                    base.headerLenMm(), mid, base.headerType());
-            double total = rowFlows(layout, guess).stream().mapToDouble(Double::doubleValue).sum();
-            if (total > target) {
-                hi = mid;
-            } else {
-                lo = mid;
-            }
-        }
-        double supply = (lo + hi) / 2.0;
-        return new FlowParameters(base.pipeDiameterMm(), base.flowLps(), base.headerLenMm(),
-                supply, base.headerType());
-    }
+    // balanceSupplyPressure() removed
 }
