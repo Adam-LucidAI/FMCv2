@@ -2,6 +2,7 @@ package org.example.flowmod.engine;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 
 /**
  * Utilities for computing simple flow equations used by optimizers.
@@ -113,9 +114,12 @@ public final class FlowPhysics {
         if (flows.isEmpty()) {
             return 0.0;
         }
-        double mean = flows.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-        double variance = flows.stream().mapToDouble(f -> (f - mean) * (f - mean)).sum() / flows.size();
-        double sd = Math.sqrt(variance);
+        SummaryStatistics stats = new SummaryStatistics();
+        for (double q : flows) {
+            stats.addValue(q);
+        }
+        double mean = stats.getMean();
+        double sd = stats.getStandardDeviation();
         return mean == 0.0 ? 0.0 : (sd / mean) * 100.0;
     }
 }
