@@ -34,12 +34,20 @@ public final class MainController {
         }
     }
 
+    private static double parseDoubleField(TextField field) {
+        String text = field.getText();
+        if (text == null || text.isBlank()) {
+            text = field.getPromptText();
+        }
+        return Double.parseDouble(text);
+    }
+
     @FXML
     private void onDesign() {
         try {
-            double id   = Double.parseDouble(pipeField.getText());
-            double gpm  = Double.parseDouble(flowField.getText());
-            double len  = Double.parseDouble(lenField.getText());
+            double id   = parseDoubleField(pipeField);
+            double gpm  = parseDoubleField(flowField);
+            double len  = parseDoubleField(lenField);
 
             double lps = gpm * 0.0631;   // GPM → L/s
             HeaderType mode = HeaderType.PRESSURE;
