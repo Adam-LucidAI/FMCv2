@@ -87,8 +87,9 @@ public final class MainController {
                     circumference, p.headerLenMm()));
         } catch (DesignNotConvergedException ex) {
             table.getItems().clear();
+            uniLabel.setText(ex.getMessage());
+            uniLabel.setStyle("-fx-text-fill: red;");
             LOGGER.error("Design failed", ex);
-            showError("Design failed: " + ex.getMessage());
         } catch (Exception ex) {
             table.getItems().clear();
             LOGGER.error("Invalid input", ex);

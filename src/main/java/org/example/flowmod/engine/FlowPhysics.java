@@ -121,30 +121,49 @@ public final class FlowPhysics {
             return sum;
         };
 
-        org.apache.commons.math3.analysis.solvers.NewtonRaphsonSolver solver =
-                new org.apache.commons.math3.analysis.solvers.NewtonRaphsonSolver(1e-6);
-        org.apache.commons.math3.analysis.differentiation.UnivariateDifferentiableFunction func =
-                new org.apache.commons.math3.analysis.differentiation.UnivariateDifferentiableFunction() {
-            @Override
-            public double value(double x) {
-                return totalFromPressure.apply(x) - totalFlow;
-            }
+        org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer optimizer =
+                new org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer()
+                        .withMaxIterations(50)
+                        .withMaxEvaluations(50);
 
-            @Override
-            public org.apache.commons.math3.analysis.differentiation.DerivativeStructure value(
-                    org.apache.commons.math3.analysis.differentiation.DerivativeStructure t) {
-                double x = t.getValue();
-                double f0 = totalFromPressure.apply(x);
-                double eps = 1e-6;
-                double fp = totalFromPressure.apply(x + eps);
-                double fm = totalFromPressure.apply(x - eps);
-                double derivative = (fp - fm) / (2 * eps);
-                return new org.apache.commons.math3.analysis.differentiation.DerivativeStructure(
-                        1, 1, f0 - totalFlow, derivative);
-            }
-        };
+        org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction model =
+                (org.apache.commons.math3.linear.RealVector point) -> {
+                    double x = point.getEntry(0);
+                    double f0 = totalFromPressure.apply(x) - totalFlow;
+                    double eps = 1e-6;
+                    double fp = totalFromPressure.apply(x + eps);
+                    double fm = totalFromPressure.apply(x - eps);
+                    double derivative = (fp - fm) / (2 * eps);
+                    org.apache.commons.math3.linear.RealVector value =
+                            new org.apache.commons.math3.linear.ArrayRealVector(new double[]{f0});
+                    org.apache.commons.math3.linear.RealMatrix jac =
+                            new org.apache.commons.math3.linear.Array2DRowRealMatrix(new double[][]{{derivative}});
+                    return new org.apache.commons.math3.util.Pair<>(value, jac);
+                };
 
-        double supplyPressure = solver.solve(100, func, 10.0);
+        org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem problem =
+                new org.apache.commons.math3.fitting.leastsquares.LeastSquaresBuilder()
+                        .start(new double[]{10.0})
+                        .target(new double[]{0.0})
+                        .model(model)
+                        .maxIterations(50)
+                        .maxEvaluations(50)
+                        .build();
+
+        double supplyPressure;
+        try {
+            org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optimum opt =
+                    optimizer.optimize(problem);
+            supplyPressure = opt.getPoint().getEntry(0);
+        } catch (Exception ex) {
+            throw new org.apache.commons.math3.exception.ConvergenceException(
+                    ex.getMessage());
+        }
+
+        if (Double.isNaN(supplyPressure)) {
+            throw new org.apache.commons.math3.exception.ConvergenceException(
+                    "Solver returned NaN pressure");
+        }
 
         double[] flowsArr = new double[n];
         double pipeFlow = totalFlow;
@@ -167,6 +186,10 @@ public final class FlowPhysics {
 
         List<Double> flows = new ArrayList<>();
         for (double q : flowsArr) {
+            if (Double.isNaN(q)) {
+                throw new org.apache.commons.math3.exception.ConvergenceException(
+                        "Solver returned NaN flow");
+            }
             flows.add(q);
         }
         return flows;
