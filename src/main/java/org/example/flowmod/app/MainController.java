@@ -87,9 +87,19 @@ public final class MainController {
         } catch (DesignNotConvergedException ex) {
             statusLabel.setText("❌ " + ex.getMessage());
             table.getItems().clear();
+
         } catch (Throwable t) {
             t.printStackTrace();
             statusLabel.setText("Unhandled: " + t.getClass().getSimpleName());
+
+            uniLabel.setText(ex.getMessage());
+            uniLabel.setStyle("-fx-text-fill: red;");
+            LOGGER.error("Design failed", ex);
+        } catch (Exception ex) {
+            table.getItems().clear();
+            LOGGER.error("Invalid input", ex);
+            showError("Invalid input: " + ex.getMessage());
+
         }
     }
 

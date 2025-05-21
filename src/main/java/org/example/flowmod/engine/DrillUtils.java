@@ -35,8 +35,29 @@ public final class DrillUtils {
 
         // target 5% coefficient of variation
         final double target = 5.0;
+        int relax = 0;
         while (true) {
-            java.util.List<Double> flows = FlowPhysics.rowFlows(layout, p);
+            java.util.List<Double> flows;
+            try {
+                flows = FlowPhysics.rowFlows(layout, p);
+            } catch (org.apache.commons.math3.exception.ConvergenceException ex) {
+                if (relax >= 5) {
+                    throw new DesignNotConvergedException(
+                            "Could not converge in 5 relax steps");
+                }
+                for (int i = 0; i < holes.size(); i++) {
+                    HoleSpec h = holes.get(i);
+                    int pos = drillSet.indexOf(h.holeDiameterMm());
+                    if (pos > 0) {
+                        holes.set(i, new HoleSpec(h.rowIndex(),
+                                drillSet.get(pos - 1), h.angleDeg()));
+                    }
+                }
+                layout = toLayout(holes);
+                relax++;
+                continue;
+            }
+
             double error = FlowPhysics.computeUniformityError(layout, p);
             if (error <= target) {
                 break;
