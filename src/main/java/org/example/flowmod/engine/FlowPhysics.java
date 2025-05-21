@@ -71,9 +71,6 @@ public final class FlowPhysics {
             return List.of();
         }
 
-        double spacing = DesignRules.DEFAULT_ROW_SPACING_MM;
-        double qTotal = p.flowLps();
-
         double spacing = p.headerLenMm() / (double) n;
 
         double idMm = p.pipeDiameterMm();
