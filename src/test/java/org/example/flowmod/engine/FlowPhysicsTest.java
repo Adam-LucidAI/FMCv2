@@ -31,7 +31,7 @@ public class FlowPhysicsTest {
     public void testComputeReynolds() {
         double gpm = 100.0;
         double lps = gpm * 0.0631;
-        FlowParameters p = new FlowParameters(150.0, lps, 1000.0, HeaderType.PRESSURE);
+        FlowParameters p = new FlowParameters(150.0, lps, 1000.0, 100.0, HeaderType.PRESSURE);
         double Re = FlowPhysics.computeReynolds(p);
         assertEquals(1.9e5, Re, 2e4);
     }

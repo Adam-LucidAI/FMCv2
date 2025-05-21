@@ -17,23 +17,25 @@ public class RuleBasedHoleOptimizerTest {
         DesignRules rules = new BasicDesignRules(10,
                 java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0));
         RuleBasedHoleOptimizer optimizer = new RuleBasedHoleOptimizer(rules, policy, physics);
-        FlowParameters p1 = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
+        FlowParameters p1 = new FlowParameters(150.0, 6.309, 1200.0, 100.0, HeaderType.PRESSURE);
         HoleLayout layout = optimizer.optimize(p1);
         assertNotNull(layout);
         assertNotNull(layout.getHoles());
         int expectedRows1 = (int) Math.floor(p1.headerLenMm() / DesignRules.DEFAULT_ROW_SPACING_MM);
         assertEquals(expectedRows1, layout.getHoles().size());
-        double err1 = FlowPhysics.computeUniformityError(layout, p1);
+        FlowParameters tuned1 = FlowPhysics.balanceSupplyPressure(layout, p1);
+        double err1 = FlowPhysics.computeUniformityError(layout, tuned1);
         assertTrue(err1 <= 5.0);
         for (HoleSpec h : layout.getHoles()) {
             assertTrue(rules.allowableDrillSizesMm().contains(h.holeDiameterMm()));
         }
 
-        FlowParameters p2 = new FlowParameters(400.0, 31.5, 2000.0, HeaderType.PRESSURE);
+        FlowParameters p2 = new FlowParameters(400.0, 31.5, 2000.0, 100.0, HeaderType.PRESSURE);
         HoleLayout layout2 = optimizer.optimize(p2);
         int expectedRows2 = (int) Math.floor(p2.headerLenMm() / DesignRules.DEFAULT_ROW_SPACING_MM);
         assertEquals(expectedRows2, layout2.getHoles().size());
-        double err2 = FlowPhysics.computeUniformityError(layout2, p2);
+        FlowParameters tuned2 = FlowPhysics.balanceSupplyPressure(layout2, p2);
+        double err2 = FlowPhysics.computeUniformityError(layout2, tuned2);
         assertTrue(err2 <= 5.0);
     }
 
@@ -44,7 +46,7 @@ public class RuleBasedHoleOptimizerTest {
         DesignRules rules = new DesignRules() {};
         RuleBasedHoleOptimizer optimizer = new RuleBasedHoleOptimizer(rules, policy, physics);
 
-        FlowParameters p = new FlowParameters(200.0, 10.0, 1500.0, HeaderType.PRESSURE);
+        FlowParameters p = new FlowParameters(200.0, 10.0, 1500.0, 100.0, HeaderType.PRESSURE);
         HoleLayout layout = optimizer.optimize(p);
         assertNotNull(layout);
         int expectedRows = (int) Math.floor(p.headerLenMm() / DesignRules.DEFAULT_ROW_SPACING_MM);
@@ -60,9 +62,10 @@ public class RuleBasedHoleOptimizerTest {
         RuleBasedHoleOptimizer optimizer = new RuleBasedHoleOptimizer(rules, policy, physics);
 
         double lps = 120.0 * 0.0631;
-        FlowParameters p = new FlowParameters(200.0, lps, 1300.0, HeaderType.PRESSURE);
+        FlowParameters p = new FlowParameters(200.0, lps, 1300.0, 100.0, HeaderType.PRESSURE);
         HoleLayout layout = optimizer.optimize(p);
-        double err = FlowPhysics.computeUniformityError(layout, p);
+        FlowParameters tuned = FlowPhysics.balanceSupplyPressure(layout, p);
+        double err = FlowPhysics.computeUniformityError(layout, tuned);
         assertTrue(err <= 5.0, "Uniformity too high: " + err);
     }
 
@@ -75,7 +78,7 @@ public class RuleBasedHoleOptimizerTest {
         RuleBasedHoleOptimizer optimizer = new RuleBasedHoleOptimizer(rules, policy, physics);
 
         double lps = 1000.0 * 0.0631;
-        FlowParameters p = new FlowParameters(50.0, lps, 100.0, HeaderType.PRESSURE);
+        FlowParameters p = new FlowParameters(50.0, lps, 100.0, 100.0, HeaderType.PRESSURE);
 
         java.time.Duration timeout = java.time.Duration.ofSeconds(5);
         org.junit.jupiter.api.Assertions.assertTimeoutPreemptively(timeout, () ->

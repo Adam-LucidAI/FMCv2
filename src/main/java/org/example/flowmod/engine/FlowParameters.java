@@ -11,5 +11,6 @@ package org.example.flowmod.engine;
 public record FlowParameters(double pipeDiameterMm,
                              double flowLps,
                              double headerLenMm,
+                             double supplyPressureKPa,
                              HeaderType headerType) {
 }
