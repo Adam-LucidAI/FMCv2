@@ -14,7 +14,7 @@ public final class MainController {
 
     private static final Logger log = LoggerFactory.getLogger(MainController.class);
 
-    @FXML private TextField pipeField, flowField, lenField, pressureField;
+    @FXML private TextField pipeField, flowField, lenField;
     @FXML private ChoiceBox<String> modeChoice;
     @FXML private Button designBtn, exportCsvBtn, exportSvgBtn;
     @FXML private TableView<HoleSpec> table;
@@ -63,16 +63,11 @@ public final class MainController {
             double id   = parseDoubleField(pipeField);
             double gpm  = parseDoubleField(flowField);
             double len  = parseDoubleField(lenField);
-            double press = parseDoubleField(pressureField);
 
-            log.debug("Parsed input: id={} flow={} len={} pressure={}", id, gpm, len, press);
+            log.debug("Parsed input: id={} flow={} len={}", id, gpm, len);
 
             double lps = gpm * 0.0631;   // GPM → L/s
-            HeaderType mode = HeaderType.PRESSURE;
-            if (modeChoice != null && "Suction".equalsIgnoreCase(modeChoice.getValue())) {
-                mode = HeaderType.SUCTION;
-            }
-            FlowParameters p = new FlowParameters(id, lps, len, press, mode);
+            FlowParameters p = new FlowParameters(id, lps, len);
             log.debug("Constructed parameters: {}", p);
 
             layout = optimizer.optimize(p);
