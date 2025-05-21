@@ -8,4 +8,7 @@ package org.example.flowmod.engine;
  * @param angleDeg        angle of the hole in degrees
  */
 public record HoleSpec(int rowIndex, double holeDiameterMm, double angleDeg) {
+    public double axialPosMm() {
+        return rowIndex * DesignRules.DEFAULT_ROW_SPACING_MM;
+    }
 }

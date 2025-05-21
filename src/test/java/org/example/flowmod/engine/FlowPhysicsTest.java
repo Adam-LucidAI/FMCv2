@@ -26,4 +26,13 @@ public class FlowPhysicsTest {
         double q = FlowPhysics.orificeFlowLps(10.0, 20.0);
         assertEquals(0.303, q, 0.005);
     }
+
+    @Test
+    public void testComputeReynolds() {
+        double gpm = 100.0;
+        double lps = gpm * 0.0631;
+        FlowParameters p = new FlowParameters(150.0, lps, 1000.0);
+        double Re = FlowPhysics.computeReynolds(p);
+        assertEquals(1.9e5, Re, 2e4);
+    }
 }
