@@ -34,6 +34,9 @@ public class RuleBasedHoleOptimizer extends GraduatedHoleOptimizer {
         }
 
         HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
+        if (layout.getHoles().isEmpty()) {
+            throw new IllegalStateException("Layout contains no holes");
+        }
         double err = FlowPhysics.computeUniformityError(layout, params);
         LOGGER.debug("Computed uniformity: {} %CV", err);
         if (err > 5.0) {

@@ -51,6 +51,7 @@
 
     <bottom>
         <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Label fx:id="statusLabel" text=""/>
             <Button fx:id="exportCsvBtn" text="Export CSV" onAction="#onExportCsv"/>
             <Button fx:id="exportSvgBtn" text="Export 2-D" onAction="#onExportSvg"/>
         </HBox>
