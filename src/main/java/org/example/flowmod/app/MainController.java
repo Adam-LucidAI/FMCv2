@@ -46,6 +46,16 @@ public final class MainController {
         return Double.parseDouble(text);
     }
 
+    /**
+     * Display an error message to the user and log it.
+     */
+    private void showError(String message) {
+        if (statusLabel != null) {
+            statusLabel.setText("❌ " + message);
+        }
+        log.error(message);
+    }
+
     @FXML
     private void onDesign() {
         statusLabel.setText("");
@@ -90,15 +100,13 @@ public final class MainController {
 
         } catch (Throwable t) {
             t.printStackTrace();
+            table.getItems().clear();
             statusLabel.setText("Unhandled: " + t.getClass().getSimpleName());
 
-            uniLabel.setText(ex.getMessage());
+            uniLabel.setText(t.getMessage());
             uniLabel.setStyle("-fx-text-fill: red;");
-            LOGGER.error("Design failed", ex);
-        } catch (Exception ex) {
-            table.getItems().clear();
-            LOGGER.error("Invalid input", ex);
-            showError("Invalid input: " + ex.getMessage());
+            log.error("Design failed", t);
+            showError(t.getMessage());
 
         }
     }
