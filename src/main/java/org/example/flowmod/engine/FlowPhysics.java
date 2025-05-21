@@ -86,7 +86,7 @@ public final class FlowPhysics {
 
         for (int i = 0; i < rows; i++) {
             HoleSpec h = holes.get(i);
-            double dp = Math.abs(localP);
+            double dp = -localP;
             qh[i] = orificeFlowLps(h.holeDiameterMm(), dp);
 
             pipeFlow -= qh[i];
@@ -111,7 +111,15 @@ public final class FlowPhysics {
             double total = flows.stream().mapToDouble(Double::doubleValue).sum();
             return total - p.flowLps();
         };
-        double root = solver.solve(100, fn, pMin, pMax);
+
+        double low = -200.0;
+        double high = -0.5;
+        double fHigh = fn.value(high);
+        if (fHigh < 0) {
+            throw new DesignNotConvergedException("Suction exceeds -0.5 kPa");
+        }
+
+        double root = solver.solve(100, fn, low, high);
         for (int i = 0; i < 20; i++) {
             double err = fn.value(root);
             if (Math.abs(err) < 1e-4) {
