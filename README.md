@@ -8,8 +8,9 @@ FMCv2 is a tool for designing flow modifiers. It calculates design parameters an
 
 ## Building
 
-Use the Gradle wrapper to build the project. The required Gradle distribution is
-included in `gradle/wrapper`, so no network access is needed.
+Use the Gradle wrapper to build the project. The wrapper downloads the required
+Gradle distribution the first time it runs, so network access is needed unless
+you supply the distribution zip in `gradle/wrapper`.
 
 ```bash
 ./gradlew build
