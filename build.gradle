@@ -25,15 +25,10 @@ dependencies {
         throw new GradleException("Unsupported operating system: $currentOs")
     }
 
-    implementation "org.openjfx:javafx-base:$fxVersion"
-    implementation "org.openjfx:javafx-graphics:$fxVersion"
-    implementation "org.openjfx:javafx-controls:$fxVersion"
-    implementation "org.openjfx:javafx-fxml:$fxVersion"
-
-    runtimeOnly    "org.openjfx:javafx-base:$fxVersion:$os"
-    runtimeOnly    "org.openjfx:javafx-graphics:$fxVersion:$os"
-    runtimeOnly    "org.openjfx:javafx-controls:$fxVersion:$os"
-    runtimeOnly    "org.openjfx:javafx-fxml:$fxVersion:$os"
+    implementation "org.openjfx:javafx-base:$fxVersion:$os"
+    implementation "org.openjfx:javafx-graphics:$fxVersion:$os"
+    implementation "org.openjfx:javafx-controls:$fxVersion:$os"
+    implementation "org.openjfx:javafx-fxml:$fxVersion:$os"
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
 }
 
