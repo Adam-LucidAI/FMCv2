@@ -56,6 +56,13 @@ public final class FlowPhysics {
         return dp / 1000.0;
     }
 
+    /** Compute Reynolds number for given flow parameters. */
+    public static double computeReynolds(FlowParameters p) {
+        double area = Math.PI * Math.pow(p.pipeDiameterMm() / 1000.0, 2) / 4.0;
+        double v = p.flowLps() / 1000.0 / area;
+        return 1000.0 * v * (p.pipeDiameterMm() / 1000.0) / 0.001;
+    }
+
     /** Compute per-row flow for a HoleLayout, returning List<Double> L/s. */
     public static List<Double> rowFlows(HoleLayout layout, FlowParameters p) {
         List<HoleSpec> holes = layout.getHoles();

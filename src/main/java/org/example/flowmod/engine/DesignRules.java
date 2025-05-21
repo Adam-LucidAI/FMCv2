@@ -5,6 +5,9 @@ package org.example.flowmod.engine;
  */
 public interface DesignRules {
 
+    double DEFAULT_ROW_SPACING_MM = 120.0;
+    double UNIFORMITY_TARGET_PCT = 5.0;
+
     /**
      * Desired number of hole rows along the header.
      *

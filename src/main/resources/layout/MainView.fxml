@@ -3,28 +3,45 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="8" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="org.example.flowmod.app.MainController"
-      prefWidth="480" prefHeight="360">
-    <HBox spacing="6">
-        <Label text="Pipe Ø (mm)"/>
-        <TextField fx:id="pipeField" promptText="150"/>
-        <Label text="Flow (GPM)"/>
-        <TextField fx:id="flowField" promptText="100"/>
-    </HBox>
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="org.example.flowmod.app.MainController"
+            prefWidth="600" prefHeight="360">
+    <left>
+        <VBox spacing="8">
+            <Label text="Pipe Ø mm"/>
+            <TextField fx:id="pipeField" promptText="150"/>
+            <Label text="Flow GPM"/>
+            <TextField fx:id="flowField" promptText="100"/>
+            <Label text="Header length mm"/>
+            <TextField fx:id="lenField" promptText="1200"/>
+            <Button fx:id="designBtn" text="Design" onAction="#onDesign"/>
+        </VBox>
+    </left>
 
-    <HBox spacing="6">
-        <Label text="Header length (mm)"/>
-        <TextField fx:id="lenField" promptText="1200"/>
-        <Button text="Design" onAction="#onDesign"/>
-    </HBox>
+    <center>
+        <VBox spacing="6">
+            <TableView fx:id="table" prefHeight="260">
+                <columns>
+                    <TableColumn fx:id="posCol" text="Pos (mm)"/>
+                    <TableColumn fx:id="rowCol" text="Row"/>
+                    <TableColumn fx:id="diaCol" text="Hole Ø (mm)"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
 
-    <TableView fx:id="table" prefHeight="260">
-        <columns>
-            <TableColumn fx:id="rowCol" text="Row"/>
-            <TableColumn fx:id="diaCol" text="Hole Ø (mm)"/>
-        </columns>
-    </TableView>
+    <right>
+        <VBox spacing="6" fx:id="statsPane">
+            <Label fx:id="reLabel" text="Reynolds:"/>
+            <Label fx:id="uniLabel" text="Uniformity:"/>
+            <Label fx:id="sheetLabel" text="Sheet size:"/>
+        </VBox>
+    </right>
 
-    <Label fx:id="statusLabel"/>
-</VBox>
+    <bottom>
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Button fx:id="exportCsvBtn" text="Export CSV" onAction="#onExportCsv"/>
+            <Button fx:id="exportSvgBtn" text="Export 2-D" onAction="#onExportSvg"/>
+        </HBox>
+    </bottom>
+</BorderPane>
