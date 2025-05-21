@@ -157,11 +157,13 @@ public final class FlowPhysics {
             supplyPressure = opt.getPoint().getEntry(0);
         } catch (Exception ex) {
             throw new org.apache.commons.math3.exception.ConvergenceException(
+                    org.apache.commons.math3.exception.util.LocalizedFormats.SIMPLE_MESSAGE,
                     ex.getMessage());
         }
 
         if (Double.isNaN(supplyPressure)) {
             throw new org.apache.commons.math3.exception.ConvergenceException(
+                    org.apache.commons.math3.exception.util.LocalizedFormats.SIMPLE_MESSAGE,
                     "Solver returned NaN pressure");
         }
 
@@ -188,6 +190,7 @@ public final class FlowPhysics {
         for (double q : flowsArr) {
             if (Double.isNaN(q)) {
                 throw new org.apache.commons.math3.exception.ConvergenceException(
+                        org.apache.commons.math3.exception.util.LocalizedFormats.SIMPLE_MESSAGE,
                         "Solver returned NaN flow");
             }
             flows.add(q);
