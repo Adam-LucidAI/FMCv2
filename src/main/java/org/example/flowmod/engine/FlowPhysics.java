@@ -70,41 +70,31 @@ public final class FlowPhysics {
         if (n == 0) {
             return List.of();
         }
+
         double spacing = p.headerLenMm() / (double) n;
-        double qTotal = p.flowLps();
         double idMm = p.pipeDiameterMm();
 
-        double pLow = 0.001;
-        double pHigh = 1000.0;
-        List<Double> flows = null;
-        for (int iter = 0; iter < 40; iter++) {
-            double mid = (pLow + pHigh) / 2.0;
-            flows = computeFlowsForP0(mid, holes, spacing, idMm, qTotal);
-            double sum = flows.stream().mapToDouble(Double::doubleValue).sum();
-            if (sum > qTotal) {
-                pHigh = mid;
-            } else {
-                pLow = mid;
-            }
-        }
-        return flows == null ? List.of() : flows;
-    }
+        double[] flowsArr = new double[n];
+        double pipeFlow = 0.0;
+        double pressure = 0.0;
 
-    private static List<Double> computeFlowsForP0(double p0_kPa, List<HoleSpec> holes,
-                                                  double spacingMm, double idMm, double totalFlow) {
-        List<Double> result = new ArrayList<>();
-        double remaining = totalFlow;
-        double pressure = p0_kPa;
-        for (int i = 0; i < holes.size(); i++) {
+        // iterate from blind end toward the supply end
+        for (int i = n - 1; i >= 0; i--) {
+            HoleSpec hole = holes.get(i);
+            double holeFlow = orificeFlowLps(hole.holeDiameterMm(), -pressure);
+            flowsArr[i] = holeFlow;
+            pipeFlow += holeFlow;
+
             if (i > 0) {
-                pressure -= frictionDrop_kPa(spacingMm, idMm, remaining);
+                pressure -= frictionDrop_kPa(spacing, idMm, pipeFlow);
             }
-            double q = orificeFlowLps(holes.get(i).holeDiameterMm(), Math.max(pressure, 0.0));
-            q = Math.min(q, remaining);
-            result.add(q);
-            remaining -= q;
         }
-        return result;
+
+        List<Double> flows = new ArrayList<>();
+        for (double q : flowsArr) {
+            flows.add(q);
+        }
+        return flows;
     }
 
     /** Return uniformity error (%CV) = 100*σ/μ across rows. */
