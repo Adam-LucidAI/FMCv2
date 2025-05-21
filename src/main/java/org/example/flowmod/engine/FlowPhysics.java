@@ -71,11 +71,7 @@ public final class FlowPhysics {
             return List.of();
         }
 
-        double spacing = DesignRules.DEFAULT_ROW_SPACING_MM;
-        double qTotal = p.flowLps();
-
         double spacing = p.headerLenMm() / (double) n;
-
         double idMm = p.pipeDiameterMm();
 
         double[] flowsArr = new double[n];
@@ -85,12 +81,22 @@ public final class FlowPhysics {
         // iterate from blind end toward the supply end
         for (int i = n - 1; i >= 0; i--) {
             HoleSpec hole = holes.get(i);
-            double holeFlow = orificeFlowLps(hole.holeDiameterMm(), -pressure);
+            double holeFlow;
+            if (p.headerType() == HeaderType.PRESSURE) {
+                holeFlow = orificeFlowLps(hole.holeDiameterMm(), pressure);
+            } else {
+                holeFlow = orificeFlowLps(hole.holeDiameterMm(), -pressure);
+            }
             flowsArr[i] = holeFlow;
             pipeFlow += holeFlow;
 
             if (i > 0) {
-                pressure -= frictionDrop_kPa(spacing, idMm, pipeFlow);
+                double drop = frictionDrop_kPa(spacing, idMm, pipeFlow);
+                if (p.headerType() == HeaderType.PRESSURE) {
+                    pressure += drop;
+                } else {
+                    pressure -= drop;
+                }
             }
         }
 
