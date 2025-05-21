@@ -2,7 +2,7 @@ package org.example.flowmod.engine;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 /**
  * Utilities for computing simple flow equations used by optimizers.
@@ -24,37 +24,16 @@ public final class FlowPhysics {
     }
 
     /** Volumetric flow through a circular orifice, L/s. */
-    public static double orificeFlowLps(double dMm, double deltaP_kPa) {
-        double d = dMm / 1000.0;
-        double area = Math.PI * d * d / 4.0;
-        double dp = deltaP_kPa * 1000.0;
-
-        double q = 0.0;
-        double cd = 0.611;
-        for (int i = 0; i < 10; i++) {
-            q = cd * area * Math.sqrt(2.0 * dp / RHO);
-            double v = q / area;
-            double Re = RHO * v * d / MU;
-            double newCd = computeCd(Re);
-            if (Math.abs(newCd - cd) < 1e-6) {
-                cd = newCd;
-                break;
-            }
-            cd = newCd;
-        }
-        return q * 1000.0; // m^3/s to L/s
+    public static double orificeFlowLps(double dMm, double dp_kPa) {
+        double area = Math.PI * dMm * dMm / 4e6;
+        return 0.61 * area * Math.sqrt(2 * dp_kPa * 1000 / 1000);
     }
 
     /** Pressure drop (kPa) required to get Q L/s through orifice d mm. */
     public static double orificeDeltaP_kPa(double qLps, double dMm) {
         double q = qLps / 1000.0;
-        double d = dMm / 1000.0;
-        double area = Math.PI * d * d / 4.0;
-        double v = q / area;
-        double Re = RHO * v * d / MU;
-        double cd = computeCd(Re);
-        double dp = Math.pow(q / (cd * area), 2.0) * RHO / 2.0;
-        return dp / 1000.0;
+        double area = Math.PI * dMm * dMm / 4e6;
+        return Math.pow(q / (0.61 * area), 2) / 2;
     }
 
     /** Darcy–Weisbach friction head loss (kPa) for pipe section. */
@@ -89,108 +68,30 @@ public final class FlowPhysics {
     /** Compute per-row flow for a HoleLayout, returning List<Double> L/s. */
     public static List<Double> rowFlows(HoleLayout layout, FlowParameters p) {
         List<HoleSpec> holes = layout.getHoles();
-        int n = holes.size();
-        if (n == 0) {
+        int rows = holes.size();
+        if (rows == 0) {
             return List.of();
         }
 
-        double spacing = p.headerLenMm() / (double) n;
+        double spacing = p.headerLenMm() / (double) rows;
         double idMm = p.pipeDiameterMm();
-        double totalFlow = p.flowLps();
+        double[] qh = new double[rows];
 
-        // mass balance function: total flow from given supply pressure
-        java.util.function.DoubleFunction<Double> totalFromPressure = (press) -> {
-            double pipeFlow = totalFlow;
-            double localP = press;
-            double sum = 0.0;
-            for (int i = 0; i < n; i++) {
-                HoleSpec h = holes.get(i);
-                double dp = p.headerType() == HeaderType.PRESSURE ? localP : -localP;
-                double q = orificeFlowLps(h.holeDiameterMm(), Math.max(dp, 0.0));
-                sum += q;
-                pipeFlow -= q;
-                if (i < n - 1) {
-                    double drop = frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
-                    if (p.headerType() == HeaderType.PRESSURE) {
-                        localP -= drop;
-                    } else {
-                        localP += drop;
-                    }
-                }
-            }
-            return sum;
-        };
+        double pipeFlow = p.flowLps();
+        double dropPerSection = frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
+        double localP = -rows * dropPerSection;
 
-        org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer optimizer =
-                new org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer();
-
-        org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction model =
-                (org.apache.commons.math3.linear.RealVector point) -> {
-                    double x = point.getEntry(0);
-                    double f0 = totalFromPressure.apply(x) - totalFlow;
-                    double eps = 1e-6;
-                    double fp = totalFromPressure.apply(x + eps);
-                    double fm = totalFromPressure.apply(x - eps);
-                    double derivative = (fp - fm) / (2 * eps);
-                    org.apache.commons.math3.linear.RealVector value =
-                            new org.apache.commons.math3.linear.ArrayRealVector(new double[]{f0});
-                    org.apache.commons.math3.linear.RealMatrix jac =
-                            new org.apache.commons.math3.linear.Array2DRowRealMatrix(new double[][]{{derivative}});
-                    return new org.apache.commons.math3.util.Pair<>(value, jac);
-                };
-
-        org.apache.commons.math3.fitting.leastsquares.LeastSquaresProblem problem =
-                new org.apache.commons.math3.fitting.leastsquares.LeastSquaresBuilder()
-                        .start(new double[]{10.0})
-                        .target(new double[]{0.0})
-                        .model(model)
-                        .maxIterations(50)
-                        .maxEvaluations(50)
-                        .build();
-
-        double supplyPressure;
-        try {
-            org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer.Optimum opt =
-                    optimizer.optimize(problem);
-            supplyPressure = opt.getPoint().getEntry(0);
-        } catch (Exception ex) {
-            throw new org.apache.commons.math3.exception.ConvergenceException(
-                    org.apache.commons.math3.exception.util.LocalizedFormats.SIMPLE_MESSAGE,
-                    ex.getMessage());
-        }
-
-        if (Double.isNaN(supplyPressure)) {
-            throw new org.apache.commons.math3.exception.ConvergenceException(
-                    org.apache.commons.math3.exception.util.LocalizedFormats.SIMPLE_MESSAGE,
-                    "Solver returned NaN pressure");
-        }
-
-        double[] flowsArr = new double[n];
-        double pipeFlow = totalFlow;
-        double localP = supplyPressure;
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < rows; i++) {
             HoleSpec h = holes.get(i);
-            double dp = p.headerType() == HeaderType.PRESSURE ? localP : -localP;
-            double q = orificeFlowLps(h.holeDiameterMm(), Math.max(dp, 0.0));
-            flowsArr[i] = q;
-            pipeFlow -= q;
-            if (i < n - 1) {
-                double drop = frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
-                if (p.headerType() == HeaderType.PRESSURE) {
-                    localP -= drop;
-                } else {
-                    localP += drop;
-                }
-            }
+            double dp = -localP;
+            qh[i] = orificeFlowLps(h.holeDiameterMm(), dp);
+
+            pipeFlow -= qh[i];
+            localP += frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
         }
 
         List<Double> flows = new ArrayList<>();
-        for (double q : flowsArr) {
-            if (Double.isNaN(q)) {
-                throw new org.apache.commons.math3.exception.ConvergenceException(
-                        org.apache.commons.math3.exception.util.LocalizedFormats.SIMPLE_MESSAGE,
-                        "Solver returned NaN flow");
-            }
+        for (double q : qh) {
             flows.add(q);
         }
         return flows;
@@ -199,15 +100,11 @@ public final class FlowPhysics {
     /** Return uniformity error (%CV) = 100*σ/μ across rows. */
     public static double computeUniformityError(HoleLayout layout, FlowParameters p) {
         List<Double> flows = rowFlows(layout, p);
-        if (flows.isEmpty()) {
-            return 0.0;
-        }
-        SummaryStatistics stats = new SummaryStatistics();
+        org.apache.commons.math3.stat.descriptive.DescriptiveStatistics stats = new org.apache.commons.math3.stat.descriptive.DescriptiveStatistics();
         for (double q : flows) {
             stats.addValue(q);
         }
-        double mean = stats.getMean();
-        double sd = stats.getStandardDeviation();
-        return mean == 0.0 ? 0.0 : (sd / mean) * 100.0;
+        double cvPct = 100 * stats.getStandardDeviation() / stats.getMean();
+        return cvPct;
     }
 }

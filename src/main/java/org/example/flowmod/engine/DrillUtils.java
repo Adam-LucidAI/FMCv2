@@ -20,55 +20,33 @@ public final class DrillUtils {
         if (holes.isEmpty()) {
             return blank;
         }
-        drillSet = new java.util.ArrayList<>(drillSet);
-        drillSet.sort(java.util.Comparator.reverseOrder());
 
-        // assign largest drill to all rows
-        double largest = drillSet.get(0);
+        java.util.List<Double> sizes = new java.util.ArrayList<>(drillSet);
+        sizes.sort(java.util.Comparator.reverseOrder());
+
+        double largest = sizes.get(0);
         for (int i = 0; i < holes.size(); i++) {
             HoleSpec h = holes.get(i);
             holes.set(i, new HoleSpec(h.rowIndex(), largest, h.angleDeg()));
         }
 
         HoleLayout layout = toLayout(holes);
-        int drillIdxMax = drillSet.size() - 1;
-
-        // target 5% coefficient of variation
         final double target = 5.0;
-        int relax = 0;
-        while (true) {
-            java.util.List<Double> flows;
-            try {
-                flows = FlowPhysics.rowFlows(layout, p);
-            } catch (org.apache.commons.math3.exception.ConvergenceException ex) {
-                if (relax >= 5) {
-                    throw new DesignNotConvergedException(
-                            "Could not converge in 5 relax steps");
-                }
-                for (int i = 0; i < holes.size(); i++) {
-                    HoleSpec h = holes.get(i);
-                    int pos = drillSet.indexOf(h.holeDiameterMm());
-                    if (pos > 0) {
-                        holes.set(i, new HoleSpec(h.rowIndex(),
-                                drillSet.get(pos - 1), h.angleDeg()));
-                    }
-                }
-                layout = toLayout(holes);
-                relax++;
-                continue;
-            }
 
-            double error = FlowPhysics.computeUniformityError(layout, p);
-            if (error <= target) {
+        while (true) {
+            java.util.List<Double> flows = FlowPhysics.rowFlows(layout, p);
+            double err = FlowPhysics.computeUniformityError(layout, p);
+            if (err <= target) {
                 break;
             }
-            double mean = flows.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+
             int idx = -1;
-            double maxFlow = mean;
+            double max = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < flows.size(); i++) {
                 double f = flows.get(i);
-                if (f > maxFlow) {
-                    maxFlow = f;
+                int pos = sizes.indexOf(holes.get(i).holeDiameterMm());
+                if (pos < sizes.size() - 1 && f > max) {
+                    max = f;
                     idx = i;
                 }
             }
@@ -76,31 +54,14 @@ public final class DrillUtils {
             if (idx < 0) {
                 break;
             }
+
             HoleSpec h = holes.get(idx);
-            int pos = drillSet.indexOf(h.holeDiameterMm());
-            if (pos < drillIdxMax) {
-                holes.set(idx, new HoleSpec(h.rowIndex(), drillSet.get(pos + 1), h.angleDeg()));
-                layout = toLayout(holes);
-            } else {
-                // cannot reduce this row further - stop if no other row can change
-                boolean canChange = false;
-                for (HoleSpec spec : holes) {
-                    int pIdx = drillSet.indexOf(spec.holeDiameterMm());
-                    if (pIdx < drillIdxMax) {
-                        canChange = true;
-                        break;
-                    }
-                }
-                if (!canChange) {
-                    break;
-                }
-                // mark this row as non-adjustable for next iteration by setting its flow to mean
-                // (prevents endless loop when all rows fixed)
-                flows.set(idx, mean);
-            }
+            int pos = sizes.indexOf(h.holeDiameterMm());
+            holes.set(idx, new HoleSpec(h.rowIndex(), sizes.get(pos + 1), h.angleDeg()));
+            layout = toLayout(holes);
         }
 
-        return minimiseDrillChanges(layout);
+        return layout;
     }
 
     private static HoleLayout minimiseDrillChanges(HoleLayout layout) {
