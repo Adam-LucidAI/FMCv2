@@ -122,9 +122,7 @@ public final class FlowPhysics {
         };
 
         org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer optimizer =
-                new org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer()
-                        .withMaxIterations(50)
-                        .withMaxEvaluations(50);
+                new org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer();
 
         org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction model =
                 (org.apache.commons.math3.linear.RealVector point) -> {
