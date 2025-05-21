@@ -5,10 +5,14 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import org.example.flowmod.engine.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.PrintWriter;
 
 public final class MainController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MainController.class);
 
     @FXML private TextField pipeField, flowField, lenField;
     @FXML private ChoiceBox<String> modeChoice;
@@ -22,6 +26,13 @@ public final class MainController {
             new DefaultDrillSizePolicy(), new FlowPhysics());
 
     private HoleLayout layout;
+
+    /** Display an error dialog with the given message. */
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
+        alert.setHeaderText(null);
+        alert.showAndWait();
+    }
 
     @FXML
     private void initialize() {
@@ -76,8 +87,12 @@ public final class MainController {
                     circumference, p.headerLenMm()));
         } catch (DesignNotConvergedException ex) {
             table.getItems().clear();
+            LOGGER.error("Design failed", ex);
+            showError("Design failed: " + ex.getMessage());
         } catch (Exception ex) {
             table.getItems().clear();
+            LOGGER.error("Invalid input", ex);
+            showError("Invalid input: " + ex.getMessage());
         }
     }
 
