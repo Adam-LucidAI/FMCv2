@@ -7,8 +7,8 @@ public final class DrillUtils {
     private DrillUtils() {
     }
 
-    public static HoleSpec createHole(int rowIndex, double diameterMm, double angleDeg) {
-        return new HoleSpec(rowIndex, diameterMm, angleDeg);
+    public static HoleSpec createHole(int rowIndex, double diameterMm, double angleDeg, double spacingMm) {
+        return new HoleSpec(rowIndex, diameterMm, angleDeg, spacingMm);
     }
 
     /**
@@ -27,7 +27,7 @@ public final class DrillUtils {
         double largest = sizes.get(0);
         for (int i = 0; i < holes.size(); i++) {
             HoleSpec h = holes.get(i);
-            holes.set(i, new HoleSpec(h.rowIndex(), largest, h.angleDeg()));
+            holes.set(i, new HoleSpec(h.rowIndex(), largest, h.angleDeg(), h.spacingMm()));
         }
 
         HoleLayout layout = toLayout(holes);
@@ -57,7 +57,7 @@ public final class DrillUtils {
 
             HoleSpec h = holes.get(idx);
             int pos = sizes.indexOf(h.holeDiameterMm());
-            holes.set(idx, new HoleSpec(h.rowIndex(), sizes.get(pos + 1), h.angleDeg()));
+            holes.set(idx, new HoleSpec(h.rowIndex(), sizes.get(pos + 1), h.angleDeg(), h.spacingMm()));
             layout = toLayout(holes);
         }
 

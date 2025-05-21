@@ -28,6 +28,9 @@ public class RuleBasedHoleOptimizerTest {
         for (HoleSpec h : layout.getHoles()) {
             assertTrue(rules.allowableDrillSizesMm().contains(h.holeDiameterMm()));
         }
+        HoleSpec last1 = layout.getHoles().get(layout.getHoles().size() - 1);
+        double spacing1 = p1.headerLenMm() / layout.getHoles().size();
+        assertEquals(p1.headerLenMm(), last1.axialPosMm() + spacing1, spacing1 * 0.01);
 
         FlowParameters p2 = new FlowParameters(400.0, 31.5, 2000.0, HeaderType.PRESSURE);
         HoleLayout layout2 = optimizer.optimize(p2);
@@ -35,6 +38,9 @@ public class RuleBasedHoleOptimizerTest {
         assertEquals(expectedRows2, layout2.getHoles().size());
         double err2 = FlowPhysics.computeUniformityError(layout2, p2);
         assertTrue(err2 <= 5.0);
+        HoleSpec last2 = layout2.getHoles().get(layout2.getHoles().size() - 1);
+        double spacing2 = p2.headerLenMm() / layout2.getHoles().size();
+        assertEquals(p2.headerLenMm(), last2.axialPosMm() + spacing2, spacing2 * 0.01);
     }
 
     @Test

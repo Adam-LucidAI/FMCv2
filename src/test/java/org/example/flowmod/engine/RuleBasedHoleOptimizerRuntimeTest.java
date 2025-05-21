@@ -23,5 +23,8 @@ public class RuleBasedHoleOptimizerRuntimeTest {
 
         double err = FlowPhysics.computeUniformityError(layout, p);
         assertTrue(err <= 5.0);
+        HoleSpec last = layout.getHoles().get(layout.getHoles().size() - 1);
+        double spacing = p.headerLenMm() / layout.getHoles().size();
+        assertEquals(p.headerLenMm(), last.axialPosMm() + spacing, spacing * 0.01);
     }
 }

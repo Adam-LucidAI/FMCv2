@@ -23,9 +23,10 @@ public class RuleBasedHoleOptimizer extends GraduatedHoleOptimizer {
         if (rows <= 0) {
             rows = 1;
         }
+        double spacing = params.headerLenMm() / (double) rows;
         HoleLayout blank = new HoleLayout();
         for (int i = 0; i < rows; i++) {
-            blank.addHole(new HoleSpec(i, 0.0, 0.0));
+            blank.addHole(new HoleSpec(i, 0.0, 0.0, spacing));
         }
 
         java.util.List<Double> drillSet = designRules.allowableDrillSizesMm();
