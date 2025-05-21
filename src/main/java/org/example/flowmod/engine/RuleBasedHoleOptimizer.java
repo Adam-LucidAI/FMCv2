@@ -18,32 +18,23 @@ public class RuleBasedHoleOptimizer extends GraduatedHoleOptimizer {
 
     @Override
     public HoleLayout optimize(FlowParameters params) {
-        int rows = (int) Math.floor(params.headerLenMm() /
-                DesignRules.DEFAULT_ROW_SPACING_MM);
-        if (rows <= 0) {
-            rows = 1;
-        }
-        double spacing = params.headerLenMm() / (double) rows;
-        HoleLayout blank = new HoleLayout();
-        for (int i = 0; i < rows; i++) {
-            blank.addHole(new HoleSpec(i, 0.0, 0.0, spacing));
-        }
-
         java.util.List<Double> drillSet = designRules.allowableDrillSizesMm();
         if (drillSet == null || drillSet.isEmpty()) {
             drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
         }
 
-        HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
-        if (layout.getHoles().isEmpty()) {
-            throw new IllegalStateException("Layout contains no holes");
+        double maxHole = drillSet.stream().max(Double::compareTo).orElse(4.0);
+
+        for (double dx : DrillUtils.SPACING_CANDIDATES) {
+            java.util.List<Double> rows = DrillUtils.generateCandidateRows(params.headerLenMm(), dx);
+            HoleLayout layout = HoleLayout.withRows(rows, maxHole);
+            layout = DrillUtils.taperWithRules(layout, drillSet, params);
+            if (FlowPhysics.CV(layout, params) <= 5.0) {
+                return layout;
+            }
         }
-        double err = FlowPhysics.computeUniformityError(layout, params);
-        LOGGER.debug("Computed uniformity: {} %CV", err);
-        if (err > 5.0) {
-            throw new DesignNotConvergedException(String.format("Uniformity %.2f%% exceeds target", err));
-        }
-        return layout;
+
+        throw new DesignNotConvergedException("Cannot meet spec even at 50 mm grid");
     }
 
     public DesignRules getDesignRules() {
