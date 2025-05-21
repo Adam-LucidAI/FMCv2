@@ -15,11 +15,12 @@ public class DrillUtilsTest {
             blank.addHole(new HoleSpec(i, 0.0, 0.0, spacing));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
-        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
+        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, 100.0, HeaderType.PRESSURE);
 
         HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
         assertEquals(rows, layout.getHoles().size());
-        double err = FlowPhysics.computeUniformityError(layout, params);
+        FlowParameters tuned = FlowPhysics.balanceSupplyPressure(layout, params);
+        double err = FlowPhysics.computeUniformityError(layout, tuned);
         assertTrue(err <= 5.0, "Uniformity error too high: " + err);
     }
 
@@ -32,7 +33,7 @@ public class DrillUtilsTest {
             blank.addHole(new HoleSpec(i, 0.0, 0.0, spacing));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
-        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
+        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, 100.0, HeaderType.PRESSURE);
 
         HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
         double prev = 0.0;
@@ -51,13 +52,14 @@ public class DrillUtilsTest {
             blank.addHole(new HoleSpec(i, 0.0, 0.0, spacing));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0);
-        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
+        FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, 100.0, HeaderType.PRESSURE);
 
         HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
         for (HoleSpec h : layout.getHoles()) {
             assertEquals(16.0, h.holeDiameterMm());
         }
-        double err = FlowPhysics.computeUniformityError(layout, params);
+        FlowParameters tuned2 = FlowPhysics.balanceSupplyPressure(layout, params);
+        double err = FlowPhysics.computeUniformityError(layout, tuned2);
         assertTrue(err > 5.0);
     }
 
@@ -73,7 +75,7 @@ public class DrillUtilsTest {
 
         double gpm = 120.0;
         double lps = gpm * 0.0631;
-        FlowParameters params = new FlowParameters(200.0, lps, 1300.0, HeaderType.PRESSURE);
+        FlowParameters params = new FlowParameters(200.0, lps, 1300.0, 100.0, HeaderType.PRESSURE);
 
         HoleLayout layout = DrillUtils.taperWithRules(blank, drillSet, params);
         java.util.Set<Double> used = new java.util.HashSet<>();
@@ -81,7 +83,8 @@ public class DrillUtilsTest {
             used.add(h.holeDiameterMm());
         }
         assertTrue(used.size() >= 4, "Expected at least 4 drill sizes but got " + used.size());
-        double err = FlowPhysics.computeUniformityError(layout, params);
+        FlowParameters tuned3 = FlowPhysics.balanceSupplyPressure(layout, params);
+        double err = FlowPhysics.computeUniformityError(layout, tuned3);
         assertTrue(err <= 5.0, "Uniformity error too high: " + err);
     }
 }

@@ -78,16 +78,15 @@ public final class FlowPhysics {
         double[] qh = new double[rows];
 
         double pipeFlow = p.flowLps();
-        double dropPerSection = frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
-        double localP = -rows * dropPerSection;
+        double localP = p.supplyPressureKPa();
 
         for (int i = 0; i < rows; i++) {
             HoleSpec h = holes.get(i);
-            double dp = -localP;
+            double dp = Math.abs(localP);
             qh[i] = orificeFlowLps(h.holeDiameterMm(), dp);
 
             pipeFlow -= qh[i];
-            localP += frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
+            localP -= frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
         }
 
         List<Double> flows = new ArrayList<>();
@@ -106,5 +105,29 @@ public final class FlowPhysics {
         }
         double cvPct = 100 * stats.getStandardDeviation() / stats.getMean();
         return cvPct;
+    }
+
+    /**
+     * Iteratively adjust the supply pressure until the total of row flows equals
+     * the specified system flow.
+     */
+    public static FlowParameters balanceSupplyPressure(HoleLayout layout, FlowParameters base) {
+        double target = base.flowLps();
+        double lo = 0.0;
+        double hi = Math.max(1000.0, base.supplyPressureKPa() * 2 + 10.0);
+        for (int i = 0; i < 40; i++) {
+            double mid = (lo + hi) / 2.0;
+            FlowParameters guess = new FlowParameters(base.pipeDiameterMm(), base.flowLps(),
+                    base.headerLenMm(), mid, base.headerType());
+            double total = rowFlows(layout, guess).stream().mapToDouble(Double::doubleValue).sum();
+            if (total > target) {
+                hi = mid;
+            } else {
+                lo = mid;
+            }
+        }
+        double supply = (lo + hi) / 2.0;
+        return new FlowParameters(base.pipeDiameterMm(), base.flowLps(), base.headerLenMm(),
+                supply, base.headerType());
     }
 }
