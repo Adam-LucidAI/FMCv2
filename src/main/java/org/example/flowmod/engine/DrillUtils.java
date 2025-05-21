@@ -7,6 +7,29 @@ public final class DrillUtils {
     private DrillUtils() {
     }
 
+    /** Candidate row spacings (mm) to try in descending order. */
+    public static final double[] SPACING_CANDIDATES =
+            {150.0, 120.0, 100.0, 80.0, 60.0, 50.0};
+
+    /**
+     * Generate uniform row positions for the provided spacing.
+     *
+     * @param headerLenMm total header length in millimetres
+     * @param dxMm        desired spacing between holes
+     * @return list of axial positions for the hole centres
+     */
+    public static java.util.List<Double> generateCandidateRows(double headerLenMm,
+                                                               double dxMm) {
+        java.util.List<Double> rows = new java.util.ArrayList<>();
+        if (dxMm <= 0.0 || headerLenMm <= 0.0) {
+            return rows;
+        }
+        for (double x = 0.0; x + dxMm <= headerLenMm; x += dxMm) {
+            rows.add(x);
+        }
+        return rows;
+    }
+
     public static HoleSpec createHole(int rowIndex, double diameterMm, double angleDeg, double spacingMm) {
         return new HoleSpec(rowIndex, diameterMm, angleDeg, spacingMm);
     }
@@ -50,8 +73,7 @@ public final class DrillUtils {
             double max = Double.NEGATIVE_INFINITY;
             for (int i = 0; i < flows.size(); i++) {
                 double f = flows.get(i);
-                int pos = sizes.indexOf(holes.get(i).holeDiameterMm());
-                if (pos < sizes.size() - 1 && f > max) {
+                if (f > max) {
                     max = f;
                     idx = i;
                 }
@@ -63,7 +85,16 @@ public final class DrillUtils {
 
             HoleSpec h = holes.get(idx);
             int pos = sizes.indexOf(h.holeDiameterMm());
-            holes.set(idx, new HoleSpec(h.rowIndex(), sizes.get(pos + 1), h.angleDeg(), h.spacingMm()));
+            if (pos < sizes.size() - 1) {
+                // shrink to next smaller drill size
+                holes.set(idx, new HoleSpec(h.rowIndex(), sizes.get(pos + 1), h.angleDeg(), h.spacingMm()));
+            } else {
+                // cannot shrink further -> remove the row
+                holes.remove(idx);
+                if (holes.isEmpty()) {
+                    break;
+                }
+            }
             layout = toLayout(holes);
         }
 

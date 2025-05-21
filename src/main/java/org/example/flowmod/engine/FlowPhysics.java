@@ -77,7 +77,6 @@ public final class FlowPhysics {
             return List.of();
         }
 
-        double spacing = p.headerLenMm() / (double) rows;
         double idMm = p.pipeDiameterMm();
         double[] qh = new double[rows];
 
@@ -90,7 +89,14 @@ public final class FlowPhysics {
             qh[i] = orificeFlowLps(h.holeDiameterMm(), dp);
 
             pipeFlow -= qh[i];
-            localP -= frictionDrop_kPa(spacing, idMm, Math.abs(pipeFlow));
+            if (i < rows - 1) {
+                HoleSpec next = holes.get(i + 1);
+                double dx = next.axialPosMm() - h.axialPosMm();
+                if (dx < 0) {
+                    dx = 0.0;
+                }
+                localP -= frictionDrop_kPa(dx, idMm, Math.abs(pipeFlow));
+            }
         }
 
         List<Double> flows = new ArrayList<>();
@@ -140,6 +146,11 @@ public final class FlowPhysics {
         }
         double cvPct = 100 * stats.getStandardDeviation() / stats.getMean();
         return cvPct;
+    }
+
+    /** Alias for {@link #computeUniformityError(HoleLayout, FlowParameters)}. */
+    public static double CV(HoleLayout layout, FlowParameters p) {
+        return computeUniformityError(layout, p);
     }
 
     // balanceSupplyPressure() removed
