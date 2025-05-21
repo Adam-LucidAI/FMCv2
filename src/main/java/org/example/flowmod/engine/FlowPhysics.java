@@ -70,7 +70,7 @@ public final class FlowPhysics {
         if (n == 0) {
             return List.of();
         }
-        double spacing = p.headerLenMm() / (double) n;
+        double spacing = DesignRules.DEFAULT_ROW_SPACING_MM;
         double qTotal = p.flowLps();
         double idMm = p.pipeDiameterMm();
 
