@@ -10,8 +10,9 @@ public class DrillUtilsTest {
     public void testTaperWithRulesUniformity() {
         int rows = 10;
         HoleLayout blank = new HoleLayout();
+        double spacing = 1200.0 / rows;
         for (int i = 0; i < rows; i++) {
-            blank.addHole(new HoleSpec(i, 0.0, 0.0));
+            blank.addHole(new HoleSpec(i, 0.0, 0.0, spacing));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
         FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
@@ -26,8 +27,9 @@ public class DrillUtilsTest {
     public void testTaperWithRulesMonotonicDiameters() {
         int rows = 10;
         HoleLayout blank = new HoleLayout();
+        double spacing = 1200.0 / rows;
         for (int i = 0; i < rows; i++) {
-            blank.addHole(new HoleSpec(i, 0.0, 0.0));
+            blank.addHole(new HoleSpec(i, 0.0, 0.0, spacing));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
         FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
@@ -44,8 +46,9 @@ public class DrillUtilsTest {
     public void testTaperWithRulesNoAvailableReduction() {
         int rows = 5;
         HoleLayout blank = new HoleLayout();
+        double spacing = 1200.0 / rows;
         for (int i = 0; i < rows; i++) {
-            blank.addHole(new HoleSpec(i, 0.0, 0.0));
+            blank.addHole(new HoleSpec(i, 0.0, 0.0, spacing));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0);
         FlowParameters params = new FlowParameters(150.0, 6.309, 1200.0, HeaderType.PRESSURE);
@@ -62,8 +65,9 @@ public class DrillUtilsTest {
     public void testTaperHighFlowMultipleSizes() {
         int rows = (int) Math.floor(1300.0 / DesignRules.DEFAULT_ROW_SPACING_MM);
         HoleLayout blank = new HoleLayout();
+        double spacing = 1300.0 / rows;
         for (int i = 0; i < rows; i++) {
-            blank.addHole(new HoleSpec(i, 0.0, 0.0));
+            blank.addHole(new HoleSpec(i, 0.0, 0.0, spacing));
         }
         java.util.List<Double> drillSet = java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0);
 
