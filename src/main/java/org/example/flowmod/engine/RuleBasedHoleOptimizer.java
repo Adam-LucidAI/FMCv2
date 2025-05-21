@@ -18,7 +18,8 @@ public class RuleBasedHoleOptimizer extends GraduatedHoleOptimizer {
 
     @Override
     public HoleLayout optimize(FlowParameters params) {
-        int rows = designRules.rowCount();
+        int rows = (int) Math.floor(params.headerLenMm() /
+                DesignRules.DEFAULT_ROW_SPACING_MM);
         if (rows <= 0) {
             rows = 1;
         }
