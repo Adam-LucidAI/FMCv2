@@ -12,27 +12,20 @@ import java.io.PrintWriter;
 
 public final class MainController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MainController.class);
+    private static final Logger log = LoggerFactory.getLogger(MainController.class);
 
     @FXML private TextField pipeField, flowField, lenField;
     @FXML private ChoiceBox<String> modeChoice;
     @FXML private Button designBtn, exportCsvBtn, exportSvgBtn;
     @FXML private TableView<HoleSpec> table;
     @FXML private TableColumn<HoleSpec, Number> posCol, rowCol, diaCol;
-    @FXML private Label reLabel, uniLabel, sheetLabel;
+    @FXML private Label reLabel, uniLabel, sheetLabel, statusLabel;
 
     private final RuleBasedHoleOptimizer optimizer = new RuleBasedHoleOptimizer(
             new BasicDesignRules(10, java.util.List.of(16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0)),
             new DefaultDrillSizePolicy(), new FlowPhysics());
 
     private HoleLayout layout;
-
-    /** Display an error dialog with the given message. */
-    private void showError(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
-        alert.setHeaderText(null);
-        alert.showAndWait();
-    }
 
     @FXML
     private void initialize() {
@@ -55,10 +48,13 @@ public final class MainController {
 
     @FXML
     private void onDesign() {
+        statusLabel.setText("");
         try {
             double id   = parseDoubleField(pipeField);
             double gpm  = parseDoubleField(flowField);
             double len  = parseDoubleField(lenField);
+
+            log.debug("Parsed input: id={} flow={} len={}", id, gpm, len);
 
             double lps = gpm * 0.0631;   // GPM → L/s
             HeaderType mode = HeaderType.PRESSURE;
@@ -66,8 +62,10 @@ public final class MainController {
                 mode = HeaderType.SUCTION;
             }
             FlowParameters p = new FlowParameters(id, lps, len, mode);
+            log.debug("Constructed parameters: {}", p);
 
             layout = optimizer.optimize(p);
+            log.debug("Optimiser produced {} holes", layout.getHoles().size());
 
             table.getItems().setAll(layout.getHoles());
 
@@ -81,18 +79,17 @@ public final class MainController {
             } else {
                 uniLabel.setStyle("-fx-text-fill: -fx-text-base-color;");
             }
+            log.debug("Computed uniformity error {}", err);
 
             double circumference = Math.PI * p.pipeDiameterMm();
             sheetLabel.setText(String.format("Sheet: %.0f mm × %.0f mm",
                     circumference, p.headerLenMm()));
         } catch (DesignNotConvergedException ex) {
+            statusLabel.setText("❌ " + ex.getMessage());
             table.getItems().clear();
-            LOGGER.error("Design failed", ex);
-            showError("Design failed: " + ex.getMessage());
-        } catch (Exception ex) {
-            table.getItems().clear();
-            LOGGER.error("Invalid input", ex);
-            showError("Invalid input: " + ex.getMessage());
+        } catch (Throwable t) {
+            t.printStackTrace();
+            statusLabel.setText("Unhandled: " + t.getClass().getSimpleName());
         }
     }
 
