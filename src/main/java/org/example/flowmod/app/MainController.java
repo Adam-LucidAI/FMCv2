@@ -91,7 +91,7 @@ public final class MainController {
             sheetLabel.setText(String.format("Sheet: %.0f mm × %.0f mm",
                     circumference, p.headerLenMm()));
         } catch (DesignNotConvergedException ex) {
-            statusLabel.setText("❌ " + ex.getMessage());
+            showError(ex.getMessage());
             table.getItems().clear();
 
         } catch (Throwable t) {

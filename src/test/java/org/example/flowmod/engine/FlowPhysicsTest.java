@@ -35,4 +35,11 @@ public class FlowPhysicsTest {
         double Re = FlowPhysics.computeReynolds(p);
         assertEquals(1.9e5, Re, 2e4);
     }
+
+    @Test
+    public void testOrificeMonotonic() {
+        double q1 = FlowPhysics.orificeFlowLps(40.0, 1.0);
+        double q100 = FlowPhysics.orificeFlowLps(40.0, 100.0);
+        assertTrue(q1 * 10 <= q100);
+    }
 }
